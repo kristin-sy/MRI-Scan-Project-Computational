@@ -12,7 +12,8 @@ install.packages(c(
   "tidyr",
   "lubridate",
   "readr",
-  "purrr"
+  "purrr",
+  "MASS"
 ))
 
 suppressPackageStartupMessages({
@@ -21,6 +22,7 @@ suppressPackageStartupMessages({
   library(lubridate)
   library(readr)
   library(purrr)
+  library(MASS)
 })
 
 # ----------------------------
@@ -263,15 +265,62 @@ cat(sprintf("Type 2 mean interarrival (hours): %.3f | 95%% boot CI [%.3f, %.3f]\
             ia2_mean_hat, ia2_mean_ci[1], ia2_mean_ci[2]))
 
 # ----------------------------
-# 7) Simulating new days for scheduling
+# 7) Monte Carlo simulation to check type II
+# ----------------------------
+M <- 5000 # monte carlo replications
+B_MC <- 300
+# existing stats from the boostrapping of Type 2
+dur2_mean_hat <- mean(dur2)
+q2_hat <- unname(quantile(dur2, probs=p_slot))
+risk2_hat <- mean(dur2 > slot2_hours)
+
+# storing true values that fall in the stats
+mean_in <- logical(M)
+quantile_in <- logical(M)
+risk_in <- logical(M)
+
+# sample generating loop
+for (m in 1:M) {
+  new_sample <- sample(dur2, size = n2, replace = TRUE)
+  
+#store MC boot stats
+  mcboot_mean <- numeric(B_MC)
+  mcboot_quantile <- numeric(B_MC)
+  mcboot_risk <- numeric(B_MC)
+  for (b in 1:B_MC) {
+    newsample_boot <- sample(new_sample, size = n2, replace = TRUE)
+    
+  # boot stats from resampling
+    mcboot_mean[b] <- mean(newsample_boot)
+    mcboot_quantile[b]  <- quantile(newsample_boot, p_slot)
+    mcboot_risk[b] <- mean(newsample_boot > slot2_hours)
+  }
+  
+  # confidence intervals
+    mcci_mean <- ci_pct(mcboot_mean)
+    mcci_quantile <- ci_pct(mcboot_quantile)
+    mcci_risk <- ci_pct(mcboot_risk)
+
+#do the means fall into the real range
+mean_in[m] <- (mcci_mean[1] <= dur2_mean_hat && dur2_mean_hat <= mcci_mean[2])
+quantile_in[m]   <- (mcci_quantile[1] <= q2_hat && q2_hat <= mcci_quantile[2])
+risk_in[m] <- (mcci_risk[1] <= risk2_hat && risk2_hat<= mcci_risk[2])
+}
+
+# printing results
+cat("\n=== Bootstrap CI coverage under ECDF model for Type 2 patients ===\n")
+cat(sprintf("Target coverage: 0.95 | M=%d, B_in=%d\n", M, B_MC))
+cat(sprintf("Mean coverage:   %.3f\n", mean(mean_in)))
+cat(sprintf("Q%.0f coverage:   %.3f\n", 100*p_slot, mean(quantile_in)))
+cat(sprintf("Risk coverage:   %.3f\n", mean(risk_in)))
+
+
+# ----------------------------
+# 8) Simulating new days for scheduling
 # ----------------------------
 
 # Type 2 new days
 n2_new <- sample(c2$n, 1) #resampling calls made per day
 dur2_new <- sample(dur2, n2_new, replace=TRUE) # resampling duration scan of callers
-
-
-
-
 
 
