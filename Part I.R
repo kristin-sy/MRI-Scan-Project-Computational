@@ -14,7 +14,7 @@ install.packages(c(
   "readr",
   "purrr",
   "MASS"
-))
+), repos='http://cran.us.r-project.org')
 
 suppressPackageStartupMessages({
   library(dplyr)
@@ -28,7 +28,7 @@ suppressPackageStartupMessages({
 # ----------------------------
 # 0) Settings you can choose
 # ----------------------------
-setwd("/Users/kristinhu/Documents/EFR Research/Computational")
+setwd("Git/MRI-Scan-Project-Computational")
 DATA_PATH <- "ScanRecords.csv"
 
 B <- 5000                 # bootstrap replications
@@ -335,14 +335,69 @@ cat(sprintf("Risk coverage: %.3f\n", mean(risk_in)))
 
 
 # ----------------------------
-# 8) Simulating new days for scheduling
+# 8) Export bootstrapped parameters to CSV for DES
+# ----------------------------
+
+# Create a data frame with all bootstrapped parameter values
+# Each row is one bootstrap replicate for probabilistic sensitivity analysis
+
+des_params <- data.frame(
+  replicate = 1:B,
+
+  # Type 1 parameters (Poisson arrivals, Normal durations)
+  t1_lambda = boot_lambda,
+  t1_duration_mean = boot_mu,
+  t1_duration_sd = boot_sd,
+  t1_duration_q90 = boot_qp,
+  t1_overtime_risk = boot_risk1,
+
+  # Type 2 parameters (nonparametric)
+  t2_arrivals_mean = boot_arr2_mean,
+  t2_duration_mean = boot_dur2_mean,
+  t2_duration_median = boot_dur2_median,
+  t2_duration_q90 = boot_dur2_qp,
+  t2_overtime_risk = boot_risk2,
+
+  # Interarrival times
+  t1_interarrival_mean = boot_ia1_mean,
+  t2_interarrival_mean = boot_ia2_mean
+)
+
+# Export to CSV
+write_csv(des_params, "des_bootstrap_params.csv")
+
+# Also create a summary table with point estimates and CIs
+des_summary <- data.frame(
+  parameter = c(
+    "t1_lambda", "t1_duration_mean", "t1_duration_sd", "t1_duration_q90",
+    "t1_slot_hours", "t1_overtime_risk", "t1_interarrival_mean",
+    "t2_arrivals_mean", "t2_duration_mean", "t2_duration_median",
+    "t2_duration_q90", "t2_slot_hours", "t2_overtime_risk", "t2_interarrival_mean"
+  ),
+  estimate = c(
+    lambda_hat, mu_hat, sd_hat, q1_hat, slot1_hours, risk1_hat, ia1_mean_hat,
+    arr2_mean_hat, dur2_mean_hat, dur2_median_hat, q2_hat, slot2_hours, risk2_hat, ia2_mean_hat
+  ),
+  ci_lower = c(
+    lambda_ci[1], mu_ci[1], sd_ci[1], q1_ci[1], NA, risk1_ci[1], ia1_mean_ci[1],
+    arr2_mean_ci[1], dur2_mean_ci[1], dur2_median_ci[1], q2_ci[1], NA, risk2_ci[1], ia2_mean_ci[1]
+  ),
+  ci_upper = c(
+    lambda_ci[2], mu_ci[2], sd_ci[2], q1_ci[2], NA, risk1_ci[2], ia1_mean_ci[2],
+    arr2_mean_ci[2], dur2_mean_ci[2], dur2_median_ci[2], q2_ci[2], NA, risk2_ci[2], ia2_mean_ci[2]
+  )
+)
+
+write_csv(des_summary, "des_params_summary.csv")
+
+cat("\n--- Exported DES parameters ---\n")
+cat(sprintf("Bootstrap samples (B=%d): des_bootstrap_params.csv\n", B))
+cat("Summary with point estimates and 95%% CIs: des_params_summary.csv\n")
+
+# ----------------------------
+# 9) Simulating new days for scheduling
 # ----------------------------
 
 # Type 2 new days
 n2_new <- sample(c2$n, 1) #resampling calls made per day
 dur2_new <- sample(dur2, n2_new, replace=TRUE) # resampling duration scan of callers
-
-
-
-
-

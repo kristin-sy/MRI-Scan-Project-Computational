@@ -1,0 +1,7 @@
+KPI,Mixed Mean,Mixed 95% CI,Specialized Mean,Specialized 95% CI,Difference,p-value,Significant
+wait_days_mean,2.314,±0.021,2.160,±0.023,0.155,0.0000,✓
+wait_days_p90,2.949,±0.034,3.147,±0.043,-0.198,0.0000,✓
+unexpected_wait_mean,0.006,±0.000,0.005,±0.000,0.001,0.0000,✓
+pct_patients_delayed,5.158,±0.046,5.163,±0.039,-0.005,0.7362,
+overtime_mean,0.000,±0.000,0.008,±0.000,-0.007,0.0000,✓
+utilization_mean,0.663,±0.001,0.681,±0.001,-0.018,0.0000,✓
