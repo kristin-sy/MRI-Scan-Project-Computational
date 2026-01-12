@@ -171,16 +171,19 @@ n2 <- length(dur2)
 dur2_mean_hat <- mean(dur2)
 dur2_median_hat <- median(dur2)
 q2_hat <- unname(quantile(dur2, probs=p_slot))
+dur2_sd_hat <- sd(dur2)
 
 boot_dur2_mean <- numeric(B)
 boot_dur2_median <- numeric(B)
 boot_dur2_qp <- numeric(B)
+boot_dur2_sd <- numeric(B)
 
 for (b in 1:B) {
   samp <- sample(dur2, size=n2, replace=TRUE)
   boot_dur2_mean[b] <- mean(samp)
   boot_dur2_median[b] <- median(samp)
   boot_dur2_qp[b] <- unname(quantile(samp, probs=p_slot))
+  boot_dur2_sd[b] <- sd(samp)
 }
 
 dur2_mean_ci <- ci_pct(boot_dur2_mean)
@@ -267,8 +270,9 @@ cat(sprintf("Type 2 mean interarrival (hours): %.3f | 95%% boot CI [%.3f, %.3f]\
 # ----------------------------
 # 7) Monte Carlo simulation to check type II
 # ----------------------------
-M <- 5000 # monte carlo replications
-B_MC <- 300
+M <- 1000 # monte carlo replications
+B_MC <- 199
+
 # existing stats from the boostrapping of Type 2
 dur2_mean_hat <- mean(dur2)
 q2_hat <- unname(quantile(dur2, probs=p_slot))
@@ -286,14 +290,14 @@ mc_risk <- numeric(M)
 
 # sample generating loop
 for (m in 1:M) {
-  new_sample <- sample(dur2, size = n2, replace = TRUE)
+  new_sample <- sample(dur2, size = n2, replace = TRUE) # assumes ecdf as the real
   
-  # mc stats
+  # montecarlo stats
   mc_mean[m] <- mean(new_sample)
   mc_quantile[m] <- unname(quantile(new_sample, probs = p_slot))
   mc_risk[m] <- mean(new_sample > slot2_hours)
   
-#store MC boot stats
+  # store MC boot stats
   mcboot_mean <- numeric(B_MC)
   mcboot_quantile <- numeric(B_MC)
   mcboot_risk <- numeric(B_MC)
@@ -301,31 +305,28 @@ for (m in 1:M) {
   for (b in 1:B_MC) {
     newsample_boot <- sample(new_sample, size = n2, replace = TRUE)
     
-  # boot stats from resampling
+    # boot stats from resampling
     mcboot_mean[b] <- mean(newsample_boot)
     mcboot_quantile[b]  <- quantile(newsample_boot, p_slot)
     mcboot_risk[b] <- mean(newsample_boot > slot2_hours)
   }
   
   # confidence intervals
-    mcci_mean <- ci_pct(mcboot_mean)
-    mcci_quantile <- ci_pct(mcboot_quantile)
-    mcci_risk <- ci_pct(mcboot_risk)
-
-#do the means fall into the real range
-mean_in[m] <- (mcci_mean[1] <= dur2_mean_hat && dur2_mean_hat <= mcci_mean[2])
-quantile_in[m]   <- (mcci_quantile[1] <= q2_hat && q2_hat <= mcci_quantile[2])
-risk_in[m] <- (mcci_risk[1] <= risk2_hat && risk2_hat<= mcci_risk[2])
+  mcci_mean <- ci_pct(mcboot_mean)
+  mcci_quantile <- ci_pct(mcboot_quantile)
+  mcci_risk <- ci_pct(mcboot_risk)
+  
+  #do the means fall into the real range
+  mean_in[m] <- (mcci_mean[1] <= dur2_mean_hat && dur2_mean_hat <= mcci_mean[2])
+  quantile_in[m]   <- (mcci_quantile[1] <= q2_hat && q2_hat <= mcci_quantile[2])
+  risk_in[m] <- (mcci_risk[1] <= risk2_hat && risk2_hat<= mcci_risk[2])
 }
 
 # printing results
-cat("\n=== Monte Carlo bias ===\n")
-cat(sprintf("Mean: bias = %.4f",
-            mean(mc_mean) - dur2_mean_hat))
-cat(sprintf("Q%.0f: bias = %.4f",
-            100*p_slot, mean(mc_quantile) - q2_hat))
-cat(sprintf("Risk: bias = %.4f",
-            mean(mc_risk) - risk2_hat))
+cat(sprintf("Mean: bias = %.4f\n", mean(mc_mean) - dur2_mean_hat))
+cat(sprintf("Q%.0f: bias = %.4f\n", 100*p_slot, mean(mc_quantile) - q2_hat))
+cat(sprintf("Risk: bias = %.4f\n", mean(mc_risk) - risk2_hat))
+
 
 cat("\n=== Bootstrap CI coverage under ECDF model for Type 2 patients ===\n")
 cat(sprintf("Target coverage: 0.95 | M=%d, B_in=%d\n", M, B_MC))
@@ -394,10 +395,3 @@ cat("\n--- Exported DES parameters ---\n")
 cat(sprintf("Bootstrap samples (B=%d): des_bootstrap_params.csv\n", B))
 cat("Summary with point estimates and 95%% CIs: des_params_summary.csv\n")
 
-# ----------------------------
-# 9) Simulating new days for scheduling
-# ----------------------------
-
-# Type 2 new days
-n2_new <- sample(c2$n, 1) #resampling calls made per day
-dur2_new <- sample(dur2, n2_new, replace=TRUE) # resampling duration scan of callers
