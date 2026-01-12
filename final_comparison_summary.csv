@@ -1,7 +1,7 @@
 Metric,Mixed,Specialized,Δ (Mix - Spec),p-value,Better
-Avg Wait (days),3.01 ± 0.03,3.03 ± 0.04,-0.02,0.000,Mixed
-% Wait > 3 days,35.72 ± 0.88,30.70 ± 0.86,+5.02,0.000,Specialized
+Avg Wait (days),2.37 ± 0.02,2.30 ± 0.02,+0.07,0.000,Specialized
+% Wait > 3 days,15.94 ± 0.71,15.23 ± 0.49,+0.71,0.000,Specialized
 Avg Same-Day Delay (hrs),0.00 ± 0.00,0.00 ± 0.00,+0.00,0.000,Specialized
-% Delayed > 15 min,0.26 ± 0.01,0.15 ± 0.00,+0.11,0.000,Specialized
-Total Overtime (hrs),0.01 ± 0.00,0.09 ± 0.01,-0.08,0.000,Mixed
-Utilization (%),0.66 ± 0.00,0.67 ± 0.00,-0.01,0.000,Specialized
+% Delayed > 15 min,0.26 ± 0.01,0.28 ± 0.01,-0.03,0.000,Mixed
+Total Overtime (hrs),0.03 ± 0.00,0.18 ± 0.01,-0.15,0.000,Mixed
+Utilization (%),0.68 ± 0.00,0.68 ± 0.00,-0.01,0.000,Specialized
